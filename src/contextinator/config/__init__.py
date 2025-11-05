@@ -8,6 +8,7 @@ settings validation, environment variable handling, and path utilities.
 from .settings import (
     MAX_TOKENS,
     CHUNK_OVERLAP,
+    EXTRACT_NESTED_NODES,
     SUPPORTED_EXTENSIONS,
     DEFAULT_IGNORE_PATTERNS,
     DEFAULT_EMBEDDING_MODEL,
@@ -28,6 +29,7 @@ from .settings import (
 )
 
 __all__ = [
+    'EXTRACT_NESTED_NODES',
     'MAX_TOKENS',
     'CHUNK_OVERLAP',
     'SUPPORTED_EXTENSIONS',

@@ -25,7 +25,6 @@ from .repo_utils import (
     resolve_repo_path,
 )
 from .token_counter import count_tokens
-from .toon_encoder import toon_encode
 
 __all__ = [
     'ConfigurationError',

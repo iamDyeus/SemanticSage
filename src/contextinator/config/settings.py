@@ -18,7 +18,7 @@ load_dotenv()
 # Chunking settings
 MAX_TOKENS: int = 512
 CHUNK_OVERLAP: int = 50
-
+EXTRACT_NESTED_NODES: bool = False  # Extract child nodes separately (creates duplicates if True)
 # Supported file extensions mapping to language identifiers
 SUPPORTED_EXTENSIONS: Dict[str, str] = {
     '.py': 'python',
@@ -285,7 +285,7 @@ def validate_config() -> None:
 __all__ = [
     'MAX_TOKENS',
     'CHUNK_OVERLAP',
-    'SUPPORTED_EXTENSIONS',
+    'EXTRACT_NESTED_NODES',    'SUPPORTED_EXTENSIONS',
     'DEFAULT_IGNORE_PATTERNS',
     'DEFAULT_EMBEDDING_MODEL',
     'OPENAI_EMBEDDING_MODEL',

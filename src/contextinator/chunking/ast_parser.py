@@ -289,28 +289,44 @@ def get_parser(language: str) -> Optional["Parser"]:
         return _parser_cache[language]
     
     try:
-        # Get language module
-        lang_module = LANGUAGE_MODULES.get(language)
-        if not lang_module:
-            logger.warning(f"No language module available for {language}")
-            return None
-        
-        # Handle special case for TypeScript/TSX which have different API
-        if language == 'typescript':
-            lang_obj = Language(lang_module.language_typescript())
-        elif language == 'tsx':
-            lang_obj = Language(lang_module.language_tsx())
-        else:
-            # Create Language object from module for other languages
-            lang_obj = Language(lang_module.language())
-        
-        # Create parser with language
-        parser = Parser(lang_obj)
-        _parser_cache[language] = parser
-        return parser
+   
+        try:
+            from tree_sitter_languages import get_parser as get_ts_parser
+            
+            lang_map = {
+                'cs': 'c_sharp', 'kt': 'kotlin', 'kts': 'kotlin',
+                'yml': 'yaml', 'md': 'markdown', 'sol': 'solidity', 'sh': 'bash',
+            }
+            
+            ts_lang = lang_map.get(language, language)
+            parser = get_ts_parser(ts_lang)
+            _parser_cache[language] = parser
+            return parser
+            
+        except (ImportError, Exception):
+            
+            lang_module = LANGUAGE_MODULES.get(language)
+            if not lang_module:
+                return None
+            
+     
+            if language == 'typescript':
+                lang_capsule = lang_module.language_typescript()
+            elif language == 'tsx':
+                lang_capsule = lang_module.language_tsx()
+            else:
+                lang_capsule = lang_module.language()
+            
+          
+            lang_obj = Language(lang_capsule)
+            
+            
+            parser = Parser(lang_obj)
+            _parser_cache[language] = parser
+            return parser
         
     except Exception as e:
-        logger.warning(f"Error creating parser for {language}: {e}")
+        logger.debug(f"Parser creation failed for {language}: {e}")
         return None
 
 
@@ -326,6 +342,8 @@ def extract_nodes(root_node: Any, content: str, language: str) -> List[Dict[str,
     Returns:
         List of extracted nodes with metadata
     """
+    from ..config import EXTRACT_NESTED_NODES
+    
     target_types = NODE_TYPES.get(language, [])
     if not target_types:
         return []
@@ -333,9 +351,11 @@ def extract_nodes(root_node: Any, content: str, language: str) -> List[Dict[str,
     nodes = []
     content_bytes = content.encode('utf-8')
     
-    def traverse(node: Any) -> None:
+    def traverse(node: Any, skip_children: bool = False) -> None:
         """Recursively traverse AST and extract target nodes."""
-        if node.type in target_types:
+        node_is_target = node.type in target_types
+        
+        if node_is_target:
             # Extract node content
             node_content = content_bytes[node.start_byte:node.end_byte].decode('utf-8', errors='ignore')
             
@@ -351,10 +371,15 @@ def extract_nodes(root_node: Any, content: str, language: str) -> List[Dict[str,
                 'start_byte': node.start_byte,
                 'end_byte': node.end_byte
             })
+            
         
-        # Continue traversing children
-        for child in node.children:
-            traverse(child)
+            if not EXTRACT_NESTED_NODES:
+                skip_children = True
+        
+    
+        if not skip_children:
+            for child in node.children:
+                traverse(child, skip_children)
     
     traverse(root_node)
     return nodes
